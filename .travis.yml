@@ -6,6 +6,7 @@ python:
 
 install:
   - pip install unittest2
+  - pip install pep8
 
 before_script: python setup.py pep8
 script: python setup.py test
