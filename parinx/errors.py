@@ -4,6 +4,6 @@ try:
 except ImportError:
     import json
 
+
 class MethodParsingException(Exception):
     pass
-
