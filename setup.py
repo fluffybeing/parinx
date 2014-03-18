@@ -117,7 +117,6 @@ setup(
     description='Sphinx Docstring Parser',
     entry_points='''
             [console_scripts]
-            libcloud_rest = libcloud_rest.server:main
             ''',
     cmdclass={
         'pep8': Pep8Command,
