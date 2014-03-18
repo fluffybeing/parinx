@@ -4,12 +4,11 @@ import sys
 
 from setuptools import setup, find_packages
 from setuptools import Command
-from setuptools.command.install import install as _install
+from setuptools.command.install import install
 from subprocess import call
 from unittest import TextTestRunner, TestLoader
 from glob import glob
 from os.path import splitext, basename, join as pjoin
-from itertools import ifilterfalse
 
 TEST_PATHS = ['tests', ]
 
@@ -105,17 +104,17 @@ class Pep8Command(Command):
 
 setup(
     name='parinx',
-    version='0.0.1',
+    version='0.1.0',
     packages=find_packages(),
     package_dir={'parinx': 'parinx'},
     install_requires=[
         'unittest2',
     ],
-    url='https://github.com/islamgulov/libcloud.rest/',
+    url='http://pypi.python.org/pypi/Parinx/',
     license='Apache License (2.0)',
-    author='ilgiz',
-    author_email='',
-    description='REST Interface for Libcloud',
+    author='Rahul Ranjan',
+    author_email='rahul.rrixe@gmail.com',
+    description='Sphinx Docstring Parser',
     entry_points='''
             [console_scripts]
             libcloud_rest = libcloud_rest.server:main

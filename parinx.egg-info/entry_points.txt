@@ -1,0 +1,4 @@
+
+            [console_scripts]
+            libcloud_rest = libcloud_rest.server:main
+            

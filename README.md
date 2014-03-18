@@ -1,24 +1,39 @@
 Parinx
 ======
-REST interface for [Libcloud][1] which exposes all the Libcloud functionality
-through a RESTful API. Currently Libcloud has a big limitation - you can only
-use it with Python. REST interface allows users to leverage Libcloud 
-functionality through an arbitrary language which knows how to talk HTTP.
+Parinx implements a basic Sphinx docstring parser language which provides
+a interface to extract the relavant parameter. You might find
+it most useful for tasks involving automated data extraction from sphinx
+docs. Typical usage
+often looks like this::
 
-Note: This is an Apache Google Summer of Code 2012 project.
+    #!/usr/bin/env python
 
-## Deploying
+    from parinx import parser
 
-By default Libcloud REST runs using gevent's WSGI handler. Gevent WSGI handler
-doesn't support SSL which means that if you want to use SSL you need to use a
-some kind of SSL terminator such as [stud][4].
+    def test_parse_docstring(self):
+        docstring = """
+        Return a dict.
 
-# Links
+        :type zone_id: ``str``
+        :param zone_id: Required zone id (required)
+        :keyword    auth:   Initial authentication information for the node
+                            (optional)
 
-* [Strategic plan][2]
-* [GSoC Proposal][3]
+        :rtype:    ``dict``
+        """
+        result = parser.parse_docstring(docstring)
+        print (result['description'])
+(Note parse_docstrings return a dictionary)
 
-[1]: http://libcloud.apache.org
-[2]: https://docs.google.com/document/d/1P9fIxILn-WdgpkXDPydHB_dghGs-BYuoSmkFwh0Y36w/edit
-[3]: http://www.google-melange.com/gsoc/project/google/gsoc2012/islamgulov/11001
-[4]: https://github.com/bumptech/stud.git
+
+More about dictionary
+=====================
+
+return dict have
+        description - method description
+        arguments - dict of dicts arg_name: {description, type_name, required}
+        return - dict: {description, type}
+
+A Sub-Section
+-------------
+your can query according to it.
