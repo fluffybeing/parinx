@@ -31,7 +31,8 @@ docs. Typical usage often looks like this::
 parse_docstring
 ===============
 
-`parse_docstring` takes `docstring` and `cls` i.e. class name as argument. Default value for cls is `None`.
+`parse_docstring` takes `docstring` and `cls` i.e. class name as argument.
+ Default value for cls is `None`.
 
 It returns dict which contains <br/>
 <pre>
@@ -61,17 +62,46 @@ It returns dict which contains <br/>
 ...         """
 >>> result = parse_docstring(docstring)
 >>> result
-{'return': {'type_name': 'class:`Zone` or `Node`', 'description': 'instance'},
-'description': 'Return a Zone instance. Second line docsting.', 'arguments':
-defaultdict(<function <lambda> at 0x200be60>, {'zone_id': {'type_name': '``str``',
-'description': 'Required zone id (required)', 'required': True}, 'auth':
-{'type_name': 'class:`NodeAuthSSHKey` or `NodeAuthPassword`', 'description':
-'Initial authentication information for the node (optional)', 'required': False}})}
+{'return':
+    {
+        'type_name': 'class:`Zone` or `Node`',
+        'description': 'instance'
+    },
+ 'description': 'Return a Zone instance. Second line docsting.',
+ 'arguments':defaultdict(<function <lambda> at 0x200be60>,
+    {
+        'zone_id':
+            {
+                'type_name': '``str``',
+                'description': 'Required zone id (required)',
+                'required': True
+            },
+        'auth':
+            {
+                'type_name': 'class:`NodeAuthSSHKey` or `NodeAuthPassword`',
+                'description':'Initial authentication information for the node
+                               (optional)',
+                'required': False
+            }
+    }
+  )
+}
 >>> result['arguments']
-defaultdict(<function <lambda> at 0x200bed8>, {'zone_id': {'type_name': '``str``',
-'description': 'Required zone id (required)', 'required': True}, 'auth': {'type_name':
-'class:`NodeAuthSSHKey` or `NodeAuthPassword`', 'description': 'Initial authentication
-information for the node (optional)', 'required': False}})
+defaultdict(<function <lambda> at 0x200bed8>,
+{
+    'zone_id':
+        {
+            'type_name': '``str``',
+            'description': 'Required zone id (required)',
+            'required': True
+        },
+    'auth':
+    {
+        'type_name': 'class:`NodeAuthSSHKey` or `NodeAuthPassword`',
+        'description': 'Initial authentication information for the node (optional)',
+        'required': False
+    }
+})
 >>> result['description']
 'Return a Zone instance. Second line docsting.'
 >>> return_type = result['return']['type_name']
@@ -100,12 +130,30 @@ information for the node (optional)', 'required': False}})
 ...
 >>> docstring = get_method_docstring(Foo, 'create_node')
 >>> parse_docstring(docstring, Foo)
-{'return': {'type_name': 'class:`Node`', 'description': 'The newly created node.'},
-'description': 'Create a new node instance.', 'arguments':
-defaultdict(<function <lambda> at 0x17eb8c0>,{'name': {'type_name': '``str``',
-'description': 'String with a name for this new node (required)',
-'required': True}, 'size': {'type_name': '``dict``', 'description':
-'The size of resources allocated to this node. (required)', 'required': True}})}
+{
+    'return':
+        {
+            'type_name': 'class:`Node`',
+            'description': 'The newly created node.'
+        },
+    'description': 'Create a new node instance.',
+    'arguments': defaultdict(<function <lambda> at 0x17eb8c0>,
+        {
+            'name':
+                {
+                    'type_name': '``str``',
+                    'description': 'String with a name for this new node (required)',
+                    'required': True
+                },
+            'size':
+                {
+                    'type_name': '``dict``',
+                    'description': 'The size of resources allocated to this node. (required)',
+                    'required': True
+                }
+        }
+    )
+}
 ```
 split_docstring
 ===============
@@ -123,14 +171,19 @@ Supported field strings are:
 ```python
 >>> result = split_docstring(docstring)
 >>> result
-('Return a node instance.', [':keyword    name:   String with a name for
-this new node (required)', ':type       name:   ``str`` ', ':keyword    size:
-The size of resources allocated to this node. (required)', ':type       size:
-``dict`` ', ':return: instance', ':rtype: :class:`Node` '])
+('Return a node instance.',
+[':keyword    name:   String with a name for this new node (required)',
+ ':type       name:   ``str`` ',
+ ':keyword    size: The size of resources allocated to this node. (required)',
+ ':type       size: ``dict`` ',
+ ':return: instance',
+ ':rtype: :class:`Node` '])
 >>> result[1]
-[':keyword    name:   String with a name for this new node (required)', ':type
-name:   ``str`` ', ':keyword    size:   The size of resources allocated to this
-node. (required)', ':type       size:   ``dict`` ', ':return: instance',
+[':keyword    name:   String with a name for this new node (required)',
+':type name:   ``str`` ',
+':keyword    size:   The size of resources allocated to this node. (required)',
+':type       size:   ``dict`` ',
+':return: instance',
 ':rtype: :class:`Node` ']
 >>> result[1][3]
 ':type       size:   ``dict`` '
@@ -180,23 +233,32 @@ If method docstring is empty then it takes it from parent class.
 ```
 ```python
 >>> from parinx.parser import get_method_string
-get_method_docstring(Parent, 'create_node').split('\n')
-['Create a new node instance.', '', ':keyword    name:   String with a name for this
-new node (required)', ':type       name:   ``str``', '',
-':keyword    size:   The size of resources allocated to this node.',
-'                        (required)', ':type       size:   ``dict``', '',
-':return: The newly created node.', ':rtype: :class:`Node`']
+>>> get_method_docstring(Parent, 'create_node').split('\n')
+['Create a new node instance.', '',
+ ':keyword    name:   String with a name for this new node (required)',
+ ':type       name:   ``str``', '',
+ ':keyword    size:   The size of resources allocated to this node.',
+ '                        (required)',
+ ':type       size:   ``dict``', '',
+ ':return: The newly created node.',
+ ':rtype: :class:`Node`']
 >>> get_method_docstring(Child, 'return_node').split('\n')
-['Return a Zone instance.', 'Second line docsting.', '', ':type zone_id: ``str``',
-':param zone_id: Required zone id (required)', '', ':keyword    auth:
-Initial authentication information for the node', '                    (optional)',
+['Return a Zone instance.',
+ 'Second line docsting.', '',
+ ':type zone_id: ``str``',
+ ':param zone_id: Required zone id (required)', '',
+ ':keyword    auth: Initial authentication information for the node',
+                  '                    (optional)',
 ':type       auth: :class:`NodeAuthSSHKey` or `NodeAuthPassword`', '',
 ':return:    instance', ':rtype: :class:`Zone` or `Node`']
 >>> get_method_docstring(Child, 'create_node').split('\n')
-['Create a new node instance.', '', ':keyword    name:
-String with a name for this new node (required)', ':type       name:   ``str``', '
-', ':keyword    size:   The size of resources allocated to this node.',
-'                        (required)', ':type       size:   ``dict``', '
-', ':return: The newly created node.', ':rtype: :class:`Node`']
+['Create a new node instance.', '',
+ ':keyword    name:String with a name for this new node (required)',
+ ':type       name:   ``str``', '',
+ ':keyword    size:   The size of resources allocated to this node.',
+ '                        (required)',
+ ':type       size:   ``dict``', '',
+':return: The newly created node.',
+':rtype: :class:`Node`']
 >>> get_method_docstring(Parent, 'return_node').split('\n')
 ```
