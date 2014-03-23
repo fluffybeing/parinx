@@ -1,4 +1,5 @@
-# -*- coding:utf-8 -*-
+#!/usr/bin/env python
+
 import unittest2
 
 from parinx import parser
