@@ -3,8 +3,7 @@ Parinx
 Parinx implements a basic Sphinx docstring parser language which provides
 a interface to extract the relavant parameter. You might find
 it most useful for tasks involving automated data extraction from sphinx
-docs. Typical usage
-often looks like this::
+docs. Typical usage often looks like this::
 ```python
     #!/usr/bin/env python
 
@@ -22,7 +21,7 @@ often looks like this::
         :rtype:    ``dict``
         """
         result = parser.parse_docstring(docstring)
-        print (result['description'])
+        print (result)
 ```
 (Note parse_docstrings return a dictionary)
 
@@ -41,7 +40,8 @@ It returns dict which contains <br/>
     `return` contains dict: {type_name, class, description} <br/>
 </pre>
 
-When `cls=None`
+## When `cls=None`
+
 
 ```python
 >>> from parinx.parser import parse_docstring
@@ -79,8 +79,8 @@ information for the node (optional)', 'required': False}})
 'class:`Zone` or `Node`'
 ```
 
-When `cls!= None`
-----------------
+## When `cls!= None`
+
 ```python
 >>> class Foo(object):
 ...     def create_node(self, **kwargs):
@@ -101,8 +101,9 @@ When `cls!= None`
 >>> docstring = get_method_docstring(Foo, 'create_node')
 >>> parse_docstring(docstring, Foo)
 {'return': {'type_name': 'class:`Node`', 'description': 'The newly created node.'},
-'description': 'Create a new node instance.', 'arguments': defaultdict(<function <lambda> at 0x17eb8c0>,
-{'name': {'type_name': '``str``', 'description': 'String with a name for this new node (required)',
+'description': 'Create a new node instance.', 'arguments':
+defaultdict(<function <lambda> at 0x17eb8c0>,{'name': {'type_name': '``str``',
+'description': 'String with a name for this new node (required)',
 'required': True}, 'size': {'type_name': '``dict``', 'description':
 'The size of resources allocated to this node. (required)', 'required': True}})}
 ```
@@ -112,12 +113,12 @@ split_docstring
 `split_docstring' return description and list of fields strings.
 
 Supported field strings are:
-':param' <br/>
-':type' <br/>
-':keyword' <br/>
-':rtype:' <br/>
-'@inherits:' <br/>
-':return:' <br/>
+* ':param' <br/>
+* ':type' <br/>
+* ':keyword' <br/>
+* ':rtype:' <br/>
+* '@inherits:' <br/>
+* ':return:' <br/>
 
 ```python
 >>> result = split_docstring(docstring)
@@ -144,40 +145,40 @@ It returns method docstring. <br/>
 If method docstring is empty then it takes it from parent class.
 
 ```python
-class Parent(object):
-    def create_node(self, **kwargs):
-        """
-        Create a new node instance.
+>>> class Parent(object):
+        def create_node(self, **kwargs):
+            """
+            Create a new node instance.
 
-        :keyword    name:   String with a name for this new node (required)
-        :type       name:   ``str``
+            :keyword    name:   String with a name for this new node (required)
+            :type       name:   ``str``
 
-        :keyword    size:   The size of resources allocated to this node.
+            :keyword    size:   The size of resources allocated to this node.
                                 (required)
-        :type       size:   ``dict``
+            :type       size:   ``dict``
 
-        :return: The newly created node.
-        :rtype: :class:`Node`
-        """
+            :return: The newly created node.
+            :rtype: :class:`Node`
+            """
 
-class Child(Parent):
-    def return_node(self, **kwargs):
-        """
-        Return a Zone instance.
-        Second line docsting.
+>>> class Child(Parent):
+        def return_node(self, **kwargs):
+            """
+            Return a Zone instance.
+            Second line docsting.
 
-        :type zone_id: ``str``
-        :param zone_id: Required zone id (required)
+            :type zone_id: ``str``
+            :param zone_id: Required zone id (required)
 
-        :keyword    auth:   Initial authentication information for the node
+            :keyword    auth:   Initial authentication information for the node
                             (optional)
-        :type       auth: :class:`NodeAuthSSHKey` or `NodeAuthPassword`
+            :type       auth: :class:`NodeAuthSSHKey` or `NodeAuthPassword`
 
-        :return:    instance
-        :rtype: :class:`Zone` or `Node`
-        """
-
-
+            :return:    instance
+            :rtype: :class:`Zone` or `Node`
+            """
+```
+```python
 >>> from parinx.parser import get_method_string
 get_method_docstring(Parent, 'create_node').split('\n')
 ['Create a new node instance.', '', ':keyword    name:   String with a name for this
