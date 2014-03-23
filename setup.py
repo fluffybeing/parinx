@@ -104,17 +104,17 @@ class Pep8Command(Command):
 
 setup(
     name='parinx',
-    version='0.2.0',
+    version='0.1.1',
     packages=find_packages(),
     package_dir={'parinx': 'parinx'},
-    install_requires=[
-        'unittest2',
-    ],
-    url='http://pypi.python.org/pypi/Parinx/',
+    url='https://github.com/rahulrrixe/parinx',
     license='Apache License (2.0)',
     author='Rahul Ranjan',
     author_email='rahul.rrixe@gmail.com',
-    description='Sphinx Docstring Parser',
+    description='Parinx implements a basic Sphinx docstring parser language   \
+                 which providesa interface to extract the relavant parameter. \
+                 You might find it most useful for tasks involving automated  \
+                 data extraction from sphinx docs.',
     entry_points='''
             [console_scripts]
             ''',
@@ -123,4 +123,6 @@ setup(
         'test': TestCommand,
         'install': install,
     },
+    keywords=['sphinx', 'docstring', 'parser'],
+    tests_require=['unittest2']
 )
