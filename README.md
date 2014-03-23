@@ -41,7 +41,7 @@ It returns dict which contains <br/>
     `return` contains dict: {type_name, class, description} <br/>
 </pre>
 
-## When `cls=None`
+### When `cls=None`
 
 
 ```python
@@ -109,7 +109,7 @@ defaultdict(<function <lambda> at 0x200bed8>,
 'class:`Zone` or `Node`'
 ```
 
-## When `cls!= None`
+### When `cls!= None`
 
 ```python
 >>> class Foo(object):
@@ -148,7 +148,8 @@ defaultdict(<function <lambda> at 0x200bed8>,
             'size':
                 {
                     'type_name': '``dict``',
-                    'description': 'The size of resources allocated to this node. (required)',
+                    'description': 'The size of resources allocated to this node.
+                                    (required)',
                     'required': True
                 }
         }
@@ -181,7 +182,8 @@ Supported field strings are:
 >>> result[1]
 [':keyword    name:   String with a name for this new node (required)',
 ':type name:   ``str`` ',
-':keyword    size:   The size of resources allocated to this node. (required)',
+':keyword    size:   The size of resources allocated to this node.
+                     (required)',
 ':type       size:   ``dict`` ',
 ':return: instance',
 ':rtype: :class:`Node` ']
@@ -258,7 +260,7 @@ If method docstring is empty then it takes it from parent class.
  ':keyword    size:   The size of resources allocated to this node.',
  '                        (required)',
  ':type       size:   ``dict``', '',
-':return: The newly created node.',
-':rtype: :class:`Node`']
+ ':return: The newly created node.',
+ ':rtype: :class:`Node`']
 >>> get_method_docstring(Parent, 'return_node').split('\n')
 ```
