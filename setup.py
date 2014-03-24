@@ -124,5 +124,15 @@ setup(
         'install': install,
     },
     keywords=['sphinx', 'docstring', 'parser'],
-    tests_require=['unittest2']
+    tests_require=['unittest2'],
+    classifiers=[
+        'Environment :: Console',
+        'License :: OSI Approved :: Apache Software License',
+        'Operating System :: OS Independent',
+        'Programming Language :: Python',
+        'Topic :: Software Development :: Libraries :: Python Modules',
+        'Programming Language :: Python :: 2.5',
+        'Programming Language :: Python :: 2.6',
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: Implementation :: PyPy']
 )
