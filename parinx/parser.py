@@ -9,104 +9,105 @@ from parinx.utils import LastUpdatedOrderedDict
 from parinx.errors import MethodParsingException
 
 
-class _ParinxHandler(object):
+# map between request header name and libcloud's attribute name
+XHEADERS_TO_ARGS_DICT = {
+    'x-auth-user': 'key',
+    'x-api-key': 'secret',
+    'x-provider-path': 'path',
+    'x-provider-port': 'port',
+    'x-provider-host': 'host',
+    'x-dummy-creds': 'creds',  # FIXME: for tests only
+    'x-provider-key': 'key',
+    'x-provider-uri': 'uri',
+    'x-provider-api-version': 'api_version',
+    'x-provider-secure': 'secure',
+    'x-provider-datacenter': 'datacenter',
+}
 
-    def __init__(self):
-        # map between request header name and libcloud's attribute name
-        self.XHEADERS_TO_ARGS_DICT = {
-            'x-auth-user': 'key',
-            'x-api-key': 'secret',
-            'x-provider-path': 'path',
-            'x-provider-port': 'port',
-            'x-provider-host': 'host',
-            'x-dummy-creds': 'creds',  # FIXME: for tests only
-            'x-provider-key': 'key',
-            'x-provider-uri': 'uri',
-            'x-provider-api-version': 'api_version',
-            'x-provider-secure': 'secure',
-            'x-provider-datacenter': 'datacenter',
-        }
+#FIXME: GK?
+ARGS_TO_XHEADERS_DICT = dict(
+    ([k, v] for v, k in XHEADERS_TO_ARGS_DICT.items()))
 
-        #FIXME: GK?
-        self.ARGS_TO_XHEADERS_DICT = dict(
-            ([k, v] for v, k in self.XHEADERS_TO_ARGS_DICT.items()))
+_SUPPORTED_FIELDS = set([
+    ':param',
+    ':type',
+    ':keyword',
+    ':rtype:',
+    '@inherits:',
+    ':return:',
+])
 
-        self._SUPPORTED_FIELDS = set([
-            ':param',
-            ':type',
-            ':keyword',
-            ':rtype:',
-            '@inherits:',
-            ':return:',
-        ])
 
-    def parse_request_headers(self, headers):
-        """
-        convert headers in human readable format
+def parse_request_headers(headers):
+    """
+    convert headers in human readable format
 
-        :param headers:
-        :return:
-        """
-        request_header_keys = set(headers.keys(lower=True))
-        request_meta_keys = set(self.XHEADERS_TO_ARGS_DICT.keys())
-        data_header_keys = request_header_keys.intersection(request_meta_keys)
-        return dict(([self.XHEADERS_TO_ARGS_DICT[key],
-                    headers.get(key, None)] for key in data_header_keys))
+    :param headers:
+    :return:
+    """
+    request_header_keys = set(headers.keys(lower=True))
+    request_meta_keys = set(XHEADERS_TO_ARGS_DICT.keys())
+    data_header_keys = request_header_keys.intersection(request_meta_keys)
+    return dict(([XHEADERS_TO_ARGS_DICT[key],
+                headers.get(key, None)] for key in data_header_keys))
 
-    def _ignored_field(self, field_str):
-        return not field_str.split(None, 1)[0] in self._SUPPORTED_FIELDS
 
-    def _parse_docstring_field(self, field_lines):
-        """
+def _ignored_field(field_str):
+    return not field_str.split(None, 1)[0] in _SUPPORTED_FIELDS
 
-        :param field_string:
-        :type field_string:
-        :return: return pair:
-            argument name, dict of updates for argument info
-        :rtype: ``dict``
-        """
-        if field_lines.startswith(':type'):
-            field_data = field_lines.split(None, 2)
-            arg_name = field_data[1].strip(':')
-            arg_type = field_data[2].replace('\n', '').strip(':').strip()
-            return arg_name, {'type_name': arg_type}
-        if field_lines.startswith(
-                ':keyword') or field_lines.startswith(':param'):
-            field_data = field_lines.split(None, 2)
-            arg_name = field_data[1].strip(':')
-            arg_description = field_data[2].strip()
-            return arg_name, {'description': arg_description,
-                              'required': '(required)' in arg_description}
 
-    def _find_parent_cls(self, cls, cls_name):
-        if cls.__name__ == cls_name:
-            return cls
-        for base_cls in cls.__bases__:
-            res = self._find_parent_cls(base_cls, cls_name)
-            if res is not None:
-                return res
-        return None
+def _parse_docstring_field(field_lines):
+    """
 
-    def _parse_inherit(self, cls, inherits):
-        pattern = r"\`(?P<cls_name>[_0-9a-zA-Z]+).(?P<method_name>"
-        pattern += "[_0-9a-zA-Z]+)\`"
-        m = re.match(pattern, inherits.strip())
-        cls_name = m.group('cls_name')
-        method_name = m.group('method_name')
-        parent_cls = self._find_parent_cls(cls, cls_name)
-        docstring = get_method_docstring(parent_cls, method_name)
-        return parse_docstring(docstring, parent_cls)
+    :param field_string:
+    :type field_string:
+    :return: return pair:
+        argument name, dict of updates for argument info
+    :rtype: ``dict``
+    """
+    if field_lines.startswith(':type'):
+        field_data = field_lines.split(None, 2)
+        arg_name = field_data[1].strip(':')
+        arg_type = field_data[2].replace('\n', '').strip(':').strip()
+        return arg_name, {'type_name': arg_type}
+    if field_lines.startswith(
+            ':keyword') or field_lines.startswith(':param'):
+        field_data = field_lines.split(None, 2)
+        arg_name = field_data[1].strip(':')
+        arg_description = field_data[2].strip()
+        return arg_name, {'description': arg_description,
+                          'required': '(required)' in arg_description}
 
-    def _check_arguments_dict(self, arguments):
-        for argument, info in arguments.iteritems():
-            if info['type_name'] is None:
-                raise MethodParsingException(
-                    'Can not get type for argument %s' % (argument))
-            if info['description'] is None:
-                raise MethodParsingException(
-                    'Can not get description for argument %s' % (argument))
 
-pH = _ParinxHandler()
+def _find_parent_cls(cls, cls_name):
+    if cls.__name__ == cls_name:
+        return cls
+    for base_cls in cls.__bases__:
+        res = _find_parent_cls(base_cls, cls_name)
+        if res is not None:
+            return res
+    return None
+
+
+def _parse_inherit(cls, inherits):
+    pattern = r"\`(?P<cls_name>[_0-9a-zA-Z]+).(?P<method_name>"
+    pattern += "[_0-9a-zA-Z]+)\`"
+    m = re.match(pattern, inherits.strip())
+    cls_name = m.group('cls_name')
+    method_name = m.group('method_name')
+    parent_cls = _find_parent_cls(cls, cls_name)
+    docstring = get_method_docstring(parent_cls, method_name)
+    return parse_docstring(docstring, parent_cls)
+
+
+def _check_arguments_dict(arguments):
+    for argument, info in arguments.iteritems():
+        if info['type_name'] is None:
+            raise MethodParsingException(
+                'Can not get type for argument %s' % (argument))
+        if info['description'] is None:
+            raise MethodParsingException(
+                'Can not get description for argument %s' % (argument))
 
 
 def split_docstring(docstring):
@@ -159,6 +160,7 @@ def get_method_docstring(cls, method_name):
                 return docstrign
         else:
             return None
+
     return docstrign
 
 
@@ -198,7 +200,7 @@ def parse_docstring(docstring, cls=None):
     #parse fields
     return_description = ''
     for docstring_line in fields_lines:
-        if pH._ignored_field(docstring_line):
+        if _ignored_field(docstring_line):
             continue
         #parse inherits
         if docstring_line.startswith('@inherits'):
@@ -206,7 +208,7 @@ def parse_docstring(docstring, cls=None):
                 raise MethodParsingException()
             inherit_tmp = docstring_line.split(None, 1)[1]
             inherit_str = inherit_tmp.split(':class:', 1)[1]
-            result = pH._parse_inherit(cls, inherit_str)
+            result = _parse_inherit(cls, inherit_str)
             description = description or result['description']
             for arg_name, update_dict in result['arguments'].items():
                 arguments_dict[arg_name].update(update_dict)
@@ -221,10 +223,10 @@ def parse_docstring(docstring, cls=None):
             return_description = docstring_line.split(None, 1)[1].strip()
         #parse arguments
         else:
-            arg_name, update_dict = pH._parse_docstring_field(docstring_line)
+            arg_name, update_dict = _parse_docstring_field(docstring_line)
             arguments_dict[arg_name].update(update_dict)
     #check fields
-    pH._check_arguments_dict(arguments_dict)
+    _check_arguments_dict(arguments_dict)
     if not return_value_types:
         raise MethodParsingException('Can not get return types for method')
     return {'description': description,
