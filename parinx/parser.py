@@ -56,7 +56,7 @@ def _ignored_field(field_str):
     return not field_str.split(None, 1)[0] in _SUPPORTED_FIELDS
 
 
-def _parse_docstring_field(field_lines):
+def _parse_docstring_field(cls, field_lines):
     """
 
     :param field_string:
@@ -65,10 +65,15 @@ def _parse_docstring_field(field_lines):
         argument name, dict of updates for argument info
     :rtype: ``dict``
     """
+
+    match_name = __get_class_name(cls)
+
     if field_lines.startswith(':type'):
         field_data = field_lines.split(None, 2)
         arg_name = field_data[1].strip(':')
         arg_type = field_data[2].replace('\n', '').strip(':').strip()
+        if arg_type.startswith('class:`.'):
+            arg_type = arg_type.replace('class:`.', 'class:`'+match_name+'.')
         return arg_name, {'type_name': arg_type}
     if field_lines.startswith(
             ':keyword') or field_lines.startswith(':param'):
@@ -183,6 +188,13 @@ def parse_args(method):
     return args_dict
 
 
+def __get_class_name(cls):
+    pattern = r"\<class (?P<cls_name>(.*?))\>"
+    cls_match = re.match(pattern, str(cls))
+    match_name = cls_match.group('cls_name').replace("'", "")
+    return match_name
+
+
 def parse_docstring(docstring, cls=None):
     """
     :return: return dict
@@ -209,6 +221,7 @@ def parse_docstring(docstring, cls=None):
             inherit_tmp = docstring_line.split(None, 1)[1]
             inherit_str = inherit_tmp.split(':class:', 1)[1]
             result = _parse_inherit(cls, inherit_str)
+
             description = description or result['description']
             for arg_name, update_dict in result['arguments'].items():
                 arguments_dict[arg_name].update(update_dict)
@@ -216,14 +229,17 @@ def parse_docstring(docstring, cls=None):
             return_description = result['return']['description']
         #parse return value
         elif docstring_line.startswith(':rtype:'):
+            class_name = __get_class_name(cls)
             types_str = docstring_line.split(None, 1)[1]
             return_value_types = types_str.replace('\n', '').strip(':').strip()
+            if return_value_types.startswith('class:`.'):
+                return_value_types = return_value_types.replace('class:`.', 'class:`'+class_name+'.')
         #parse return description
         elif docstring_line.startswith(':return:'):
             return_description = docstring_line.split(None, 1)[1].strip()
         #parse arguments
         else:
-            arg_name, update_dict = _parse_docstring_field(docstring_line)
+            arg_name, update_dict = _parse_docstring_field(cls, docstring_line)
             arguments_dict[arg_name].update(update_dict)
     #check fields
     _check_arguments_dict(arguments_dict)
