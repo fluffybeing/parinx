@@ -22,7 +22,7 @@ class DateTimeJsonEncoder(json.JSONEncoder):
         elif isinstance(obj, datetime.date):
             return obj.isoformat()
         elif isinstance(obj, datetime.time):
-            #determines if a given datetime.datetime is aware.
+            # determines if a given datetime.datetime is aware.
             if obj.tzinfo is not None and\
                     obj.tzinfo.utcoffset(obj) is not None:
                 raise ValueError("JSON can't represent timezone-aware times.")

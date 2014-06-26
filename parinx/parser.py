@@ -24,7 +24,7 @@ XHEADERS_TO_ARGS_DICT = {
     'x-provider-datacenter': 'datacenter',
 }
 
-#FIXME: GK?
+# FIXME: GK?
 ARGS_TO_XHEADERS_DICT = dict(
     ([k, v] for v, k in XHEADERS_TO_ARGS_DICT.items()))
 
@@ -209,12 +209,12 @@ def parse_docstring(docstring, cls=None):
     description, fields_lines = split_docstring(docstring)
     arguments_dict = defaultdict(def_arg_dict)
     return_value_types = []
-    #parse fields
+    # parse fields
     return_description = ''
     for docstring_line in fields_lines:
         if _ignored_field(docstring_line):
             continue
-        #parse inherits
+        # parse inherits
         if docstring_line.startswith('@inherits'):
             if not cls:
                 raise MethodParsingException()
@@ -227,21 +227,22 @@ def parse_docstring(docstring, cls=None):
                 arguments_dict[arg_name].update(update_dict)
             return_value_types = result['return']['type_name']
             return_description = result['return']['description']
-        #parse return value
+        # parse return value
         elif docstring_line.startswith(':rtype:'):
             class_name = __get_class_name(cls)
             types_str = docstring_line.split(None, 1)[1]
             return_value_types = types_str.replace('\n', '').strip(':').strip()
             if return_value_types.startswith('class:`.'):
-                return_value_types = return_value_types.replace('class:`.', 'class:`'+class_name+'.')
-        #parse return description
+                return_value_types = return_value_types.replace(
+                    'class:`.', 'class:`'+class_name+'.')
+        # parse return description
         elif docstring_line.startswith(':return:'):
             return_description = docstring_line.split(None, 1)[1].strip()
-        #parse arguments
+        # parse argupments
         else:
             arg_name, update_dict = _parse_docstring_field(cls, docstring_line)
             arguments_dict[arg_name].update(update_dict)
-    #check fields
+    # check fields
     _check_arguments_dict(arguments_dict)
     if not return_value_types:
         raise MethodParsingException('Can not get return types for method')
