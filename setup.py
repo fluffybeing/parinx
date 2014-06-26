@@ -112,7 +112,7 @@ setup(
     author='Rahul Ranjan',
     author_email='rahul.rrixe@gmail.com',
     description='Parinx implements a basic Sphinx docstring parser language   \
-                 which providesa interface to extract the relavant parameter. \
+                 which provides an interface to extract the relavant parameters. \
                  You might find it most useful for tasks involving automated  \
                  data extraction from sphinx docs.',
     entry_points='''
