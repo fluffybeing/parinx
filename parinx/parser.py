@@ -235,7 +235,7 @@ def parse_docstring(docstring, cls=None):
             if return_value_types.startswith('class:`.'):
                 return_value_types = return_value_types.replace('class:`.', 'class:`'+class_name+'.')
         #parse return description
-        elif docstring_line.startswith(':return:'):
+        elif docstring_line.startswith(':return:') or docstring_line.startswith(':returns:'):
             return_description = docstring_line.split(None, 1)[1].strip()
         #parse arguments
         else:
