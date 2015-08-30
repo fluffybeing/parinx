@@ -29,12 +29,15 @@ ARGS_TO_XHEADERS_DICT = dict(
     ([k, v] for v, k in XHEADERS_TO_ARGS_DICT.items()))
 
 _SUPPORTED_FIELDS = set([
-    ':param',
+    ':param', ':parameter',
+    ':arg', ':argument',
+    ':example:', ':Example:',
     ':type',
-    ':keyword',
+    ':key', ':keyword',
     ':rtype:',
     '@inherits:',
-    ':return:',
+    ':raises',
+    ':return:', ':returns:',
 ])
 
 
@@ -68,15 +71,19 @@ def _parse_docstring_field(cls, field_lines):
 
     match_name = __get_class_name(cls)
 
-    if field_lines.startswith(':type'):
+    if field_lines.startswith(':type '):
         field_data = field_lines.split(None, 2)
         arg_name = field_data[1].strip(':')
         arg_type = field_data[2].replace('\n', '').strip(':').strip()
         if arg_type.startswith('class:`.'):
             arg_type = arg_type.replace('class:`.', 'class:`'+match_name+'.')
         return arg_name, {'type_name': arg_type}
-    if field_lines.startswith(
-            ':keyword') or field_lines.startswith(':param'):
+    if field_lines.startswith(':arg') or \
+            field_lines.startswith(':argument') or \
+            field_lines.startswith(':key') or \
+            field_lines.startswith(':keyword') or \
+            field_lines.startswith(':param') or \
+            field_lines.startswith(':parameter'):
         field_data = field_lines.split(None, 2)
         arg_name = field_data[1].strip(':')
         arg_description = field_data[2].strip()
@@ -117,31 +124,37 @@ def _check_arguments_dict(arguments):
 
 def split_docstring(docstring):
     """
-    Separates the method's description and paramter's
+    Separates the method's description and parameter's
+
+    The assumption is that all of the field definitions appear
+    at the end of the docstring.
 
     :return: Return description string and list of fields strings
     """
-    docstring_list = [line.strip() for line in docstring.splitlines()]
-    description_list = list(
-        takewhile(lambda line: not (line.startswith(':') or
-                  line.startswith('@inherit')), docstring_list))
-    description = ' '.join(description_list).strip()
-    first_field_line_number = len(description_list)
+    switched_to_fields = False
+    description_list, fields_list = [], []
 
-    fields = []
-    if first_field_line_number >= len(docstring_list):
-        return description, fields  # only description, without any field
-    last_field_lines = [docstring_list[first_field_line_number]]
+    for line in [_.strip() for _ in docstring.split('\n') if _.strip()]:
+        # Once we find the first field tag, switch to the fields list.
+        if line.startswith(tuple(_SUPPORTED_FIELDS)):
+            switched_to_fields = True
 
-    for line in docstring_list[first_field_line_number + 1:]:
-        if line.strip().startswith(':') or line.strip().startswith('@inherit'):
-            fields.append(' '.join(last_field_lines))
-            last_field_lines = [line]
+        # If we switched to the fields list, but not looking at a field marker,
+        # append to the previous line.
+        elif switched_to_fields and not line.startswith(tuple(_SUPPORTED_FIELDS)):
+            if fields_list[-1].lower().startswith(':example:'):
+                fields_list[-1] += ('\n' + line.lstrip('>>>').strip())
+            else:
+                fields_list[-1] += (' ' + line)
+            continue
+
+        if switched_to_fields:
+            fields_list.append(line)
         else:
-            last_field_lines.append(line)
+            description_list.append(line)
 
-    fields.append(' '.join(last_field_lines))
-    return description, fields
+    description = ' '.join(description_list).strip()
+    return description, fields_list
 
 
 def get_method_docstring(cls, method_name):
@@ -211,6 +224,7 @@ def parse_docstring(docstring, cls=None):
     return_value_types = []
     #parse fields
     return_description = ''
+    example = ''
     for docstring_line in fields_lines:
         if _ignored_field(docstring_line):
             continue
@@ -235,8 +249,10 @@ def parse_docstring(docstring, cls=None):
             if return_value_types.startswith('class:`.'):
                 return_value_types = return_value_types.replace('class:`.', 'class:`'+class_name+'.')
         #parse return description
-        elif docstring_line.startswith(':return:') or docstring_line.startswith(':returns:'):
+        elif docstring_line.startswith((':return:', ':returns')):
             return_description = docstring_line.split(None, 1)[1].strip()
+        elif docstring_line.lower().startswith(':example:'):
+            example = docstring_line[len(':example:'):].strip()
         #parse arguments
         else:
             arg_name, update_dict = _parse_docstring_field(cls, docstring_line)
@@ -247,5 +263,6 @@ def parse_docstring(docstring, cls=None):
         raise MethodParsingException('Can not get return types for method')
     return {'description': description,
             'arguments': arguments_dict,
+            'example': example,
             'return': {'description': return_description,
                        'type_name': return_value_types}}
