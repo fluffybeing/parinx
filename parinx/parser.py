@@ -259,10 +259,13 @@ def parse_docstring(docstring, cls=None):
             arguments_dict[arg_name].update(update_dict)
     #check fields
     _check_arguments_dict(arguments_dict)
-    if not return_value_types:
-        raise MethodParsingException('Can not get return types for method')
+
+    retval = None
+    if return_value_types:
+        retval = {'description': return_description,
+                  'type_name': return_value_types}
+
     return {'description': description,
             'arguments': arguments_dict,
             'example': example,
-            'return': {'description': return_description,
-                       'type_name': return_value_types}}
+            'return': retval}
