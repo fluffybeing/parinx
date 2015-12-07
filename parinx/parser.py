@@ -202,6 +202,8 @@ def parse_args(method):
 
 
 def __get_class_name(cls):
+    if cls is None:
+        return None
     pattern = r"\<class (?P<cls_name>(.*?))\>"
     cls_match = re.match(pattern, str(cls))
     match_name = cls_match.group('cls_name').replace("'", "")
