@@ -4,10 +4,17 @@ import inspect
 from collections import defaultdict
 from itertools import takewhile
 import re
+import sys
 
 from parinx.utils import LastUpdatedOrderedDict
 from parinx.errors import MethodParsingException
 
+if sys.version_info >= (3,):
+    def iteritems(val):
+        return val.items()
+else:
+    def iteritems(val):
+        return val.iteritems()
 
 # map between request header name and libcloud's attribute name
 XHEADERS_TO_ARGS_DICT = {
@@ -29,15 +36,12 @@ ARGS_TO_XHEADERS_DICT = dict(
     ([k, v] for v, k in XHEADERS_TO_ARGS_DICT.items()))
 
 _SUPPORTED_FIELDS = set([
-    ':param', ':parameter',
-    ':arg', ':argument',
-    ':example:', ':Example:',
+    ':param',
     ':type',
-    ':key', ':keyword',
+    ':keyword',
     ':rtype:',
     '@inherits:',
-    ':raises',
-    ':return:', ':returns:',
+    ':return:',
 ])
 
 
@@ -52,7 +56,7 @@ def parse_request_headers(headers):
     request_meta_keys = set(XHEADERS_TO_ARGS_DICT.keys())
     data_header_keys = request_header_keys.intersection(request_meta_keys)
     return dict(([XHEADERS_TO_ARGS_DICT[key],
-                headers.get(key, None)] for key in data_header_keys))
+                  headers.get(key, None)] for key in data_header_keys))
 
 
 def _ignored_field(field_str):
@@ -71,19 +75,15 @@ def _parse_docstring_field(cls, field_lines):
 
     match_name = __get_class_name(cls)
 
-    if field_lines.startswith(':type '):
+    if field_lines.startswith(':type'):
         field_data = field_lines.split(None, 2)
         arg_name = field_data[1].strip(':')
         arg_type = field_data[2].replace('\n', '').strip(':').strip()
         if arg_type.startswith('class:`.'):
             arg_type = arg_type.replace('class:`.', 'class:`'+match_name+'.')
         return arg_name, {'type_name': arg_type}
-    if field_lines.startswith(':arg') or \
-            field_lines.startswith(':argument') or \
-            field_lines.startswith(':key') or \
-            field_lines.startswith(':keyword') or \
-            field_lines.startswith(':param') or \
-            field_lines.startswith(':parameter'):
+    if field_lines.startswith(
+            ':keyword') or field_lines.startswith(':param'):
         field_data = field_lines.split(None, 2)
         arg_name = field_data[1].strip(':')
         arg_description = field_data[2].strip()
@@ -113,7 +113,7 @@ def _parse_inherit(cls, inherits):
 
 
 def _check_arguments_dict(arguments):
-    for argument, info in arguments.iteritems():
+    for argument, info in iteritems(arguments):
         if info['type_name'] is None:
             raise MethodParsingException(
                 'Can not get type for argument %s' % (argument))
@@ -124,37 +124,31 @@ def _check_arguments_dict(arguments):
 
 def split_docstring(docstring):
     """
-    Separates the method's description and parameter's
-
-    The assumption is that all of the field definitions appear
-    at the end of the docstring.
+    Separates the method's description and paramter's
 
     :return: Return description string and list of fields strings
     """
-    switched_to_fields = False
-    description_list, fields_list = [], []
-
-    for line in [_.strip() for _ in docstring.split('\n') if _.strip()]:
-        # Once we find the first field tag, switch to the fields list.
-        if line.startswith(tuple(_SUPPORTED_FIELDS)):
-            switched_to_fields = True
-
-        # If we switched to the fields list, but not looking at a field marker,
-        # append to the previous line.
-        elif switched_to_fields and not line.startswith(tuple(_SUPPORTED_FIELDS)):
-            if fields_list[-1].lower().startswith(':example:'):
-                fields_list[-1] += ('\n' + line.lstrip('>>>').strip())
-            else:
-                fields_list[-1] += (' ' + line)
-            continue
-
-        if switched_to_fields:
-            fields_list.append(line)
-        else:
-            description_list.append(line)
-
+    docstring_list = [line.strip() for line in docstring.splitlines()]
+    description_list = list(
+        takewhile(lambda line: not (line.startswith(':') or
+                                    line.startswith('@inherit')), docstring_list))
     description = ' '.join(description_list).strip()
-    return description, fields_list
+    first_field_line_number = len(description_list)
+
+    fields = []
+    if first_field_line_number >= len(docstring_list):
+        return description, fields  # only description, without any field
+    last_field_lines = [docstring_list[first_field_line_number]]
+
+    for line in docstring_list[first_field_line_number + 1:]:
+        if line.strip().startswith(':') or line.strip().startswith('@inherit'):
+            fields.append(' '.join(last_field_lines))
+            last_field_lines = [line]
+        else:
+            last_field_lines.append(line)
+
+    fields.append(' '.join(last_field_lines))
+    return description, fields
 
 
 def get_method_docstring(cls, method_name):
@@ -202,8 +196,8 @@ def parse_args(method):
 
 
 def __get_class_name(cls):
-    if cls is None:
-        return None
+    if not cls:
+        return
     pattern = r"\<class (?P<cls_name>(.*?))\>"
     cls_match = re.match(pattern, str(cls))
     match_name = cls_match.group('cls_name').replace("'", "")
@@ -226,7 +220,6 @@ def parse_docstring(docstring, cls=None):
     return_value_types = []
     #parse fields
     return_description = ''
-    example = ''
     for docstring_line in fields_lines:
         if _ignored_field(docstring_line):
             continue
@@ -251,23 +244,17 @@ def parse_docstring(docstring, cls=None):
             if return_value_types.startswith('class:`.'):
                 return_value_types = return_value_types.replace('class:`.', 'class:`'+class_name+'.')
         #parse return description
-        elif docstring_line.startswith((':return:', ':returns')):
+        elif docstring_line.startswith(':return:'):
             return_description = docstring_line.split(None, 1)[1].strip()
-        elif docstring_line.lower().startswith(':example:'):
-            example = docstring_line[len(':example:'):].strip()
         #parse arguments
         else:
             arg_name, update_dict = _parse_docstring_field(cls, docstring_line)
             arguments_dict[arg_name].update(update_dict)
     #check fields
     _check_arguments_dict(arguments_dict)
-
-    retval = None
-    if return_value_types:
-        retval = {'description': return_description,
-                  'type_name': return_value_types}
-
+    if not return_value_types:
+        raise MethodParsingException('Can not get return types for method')
     return {'description': description,
             'arguments': arguments_dict,
-            'example': example,
-            'return': retval}
+            'return': {'description': return_description,
+                       'type_name': return_value_types}}
