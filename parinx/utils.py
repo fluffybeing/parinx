@@ -23,8 +23,8 @@ class DateTimeJsonEncoder(json.JSONEncoder):
             return obj.isoformat()
         elif isinstance(obj, datetime.time):
             #determines if a given datetime.datetime is aware.
-            if obj.tzinfo is not None and\
-                    obj.tzinfo.utcoffset(obj) is not None:
+            if obj.tzinfo is not None and \
+                            obj.tzinfo.utcoffset(obj) is not None:
                 raise ValueError("JSON can't represent timezone-aware times.")
             r = obj.isoformat()
             if obj.microsecond:
@@ -41,7 +41,10 @@ class DateTimeJsonEncoder(json.JSONEncoder):
 try:
     from thread import get_ident as _get_ident
 except ImportError:
-    from dummy_thread import get_ident as _get_ident
+    try:
+        from dummy_thread import get_ident as _get_ident
+    except ImportError:
+        from threading import get_ident as _get_ident
 
 try:
     from _abcoll import KeysView, ValuesView, ItemsView
